@@ -1,4 +1,6 @@
-# Simple GNN
+# Simple GCN
+
+Test project for JetBrains Research internship.
 
 ***
 
