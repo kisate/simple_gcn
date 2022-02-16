@@ -46,15 +46,18 @@ class GCN(torch.nn.Module):
         output_dim (int): Size of output vector for each node.
         max_atomic_number (int): Maximum atomic number in input (100 should be enough).
         edge_types_num (int): Number of bond types in rdkit.
+        n_inner_layers (int): Number of convolutional layers besides the first and the last.
     """
     def __init__(self, atom_emb_dim: int, edge_emb_dim: int, atom_hidden_dim: int, output_dim: int,
-                 max_atomic_number: int = 100, edge_types_num: int = 22):
+                 max_atomic_number: int = 100, edge_types_num: int = 22, n_inner_layers: int = 0):
         super().__init__()
         self.atom_emb = nn.Embedding(max_atomic_number + 1, atom_emb_dim, 0)
         self.edge_emb = nn.Embedding(edge_types_num, edge_emb_dim, 0)
-
+        
         self.layer1 = ConvLayer(edge_emb_dim, atom_emb_dim, atom_hidden_dim)
-        self.dropout = nn.Dropout()
+
+        self.inner_layers = nn.ModuleList([ConvLayer(edge_emb_dim, atom_hidden_dim, atom_hidden_dim) for _ in range(n_inner_layers)])
+
         self.layer2 = ConvLayer(edge_emb_dim, atom_hidden_dim, output_dim)
 
     def forward(self, inputs: Data):
@@ -64,7 +67,11 @@ class GCN(torch.nn.Module):
 
         x = self.layer1(x, edge_index, edge_attr)
         x = F.relu(x)
-        x = self.dropout(x)
+
+        for layer in self.inner_layers:
+            x = layer(x, edge_index, edge_attr)
+            x = F.relu(x)
+
         x = self.layer2(x, edge_index, edge_attr)
 
         return x

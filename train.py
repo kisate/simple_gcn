@@ -20,16 +20,16 @@ def read_data(data_path: str) -> List[Data]:
     ]
 
 
-def train(network: GCN, training_data: List[Data], gpus: int = 1) -> GCN:
+def train_network(network: GCN, training_data: List[Data], gpus: int = 1) -> TrainingModule:
     training_module = TrainingModule(network)
     datamodule = TrainingDataModule(training_data)
 
-    early_stopping = EarlyStopping('val_loss', mode="min", patience=5)
+    early_stopping = EarlyStopping('val_loss', mode="min", patience=10)
 
     trainer = Trainer(gpus=gpus, callbacks=early_stopping, check_val_every_n_epoch=100)
     trainer.fit(training_module, datamodule)
 
-    return network
+    return training_module
 
 
 if __name__ == "__main__":
@@ -37,8 +37,8 @@ if __name__ == "__main__":
     parser.add_argument("--data_path", type=str, default="SAMPL.csv")
     args = parser.parse_args()
 
-    model = GCN(8, 8, 32, 1)
+    model = GCN(8, 8, 16, 1)
 
     data = read_data(args.data_path)
 
-    train(model, data)
+    module = train_network(model, data)

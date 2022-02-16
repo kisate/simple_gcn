@@ -29,8 +29,8 @@ class TrainingModule(LightningModule):
     def __init__(self, model: GCN):
         super().__init__()
         self.model = model
-        self.training_metrics = []
-        self.validation_metrics = []
+        self.training_metrics: List[Dict] = []
+        self.validation_metrics: List[Dict] = []
 
     def training_step(self, batch: Data, *args):
         out = self.model(batch)
